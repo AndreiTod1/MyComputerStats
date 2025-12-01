@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.example.ui.cpu.CpuPageController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            styleClass="scroll-pane">
+
+    <VBox styleClass="info-card" spacing="15" maxWidth="900" alignment="TOP_LEFT">
+        <padding>
+            <Insets top="25" right="25" bottom="25" left="25"/>
+        </padding>
+
+        <Label text="🖥️ PROCESSOR" styleClass="section-header"/>
+        <Separator styleClass="separator"/>
+
+        <VBox spacing="8" styleClass="stats-container">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Brand:" styleClass="info-label" prefWidth="150"/>
+                <Label fx:id="cpuBrandLabel" text="Loading..." styleClass="value-label"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Model:" styleClass="info-label" prefWidth="150"/>
+                <Label fx:id="cpuModelLabel" text="Loading..." styleClass="info-label-bold" wrapText="true" maxWidth="700"/>
+            </HBox>
+        </VBox>
+
+        <Separator styleClass="separator"/>
+
+        <VBox spacing="8" styleClass="stats-container">
+            <Label text="Core Information:" styleClass="info-label-bold"/>
+            <Label fx:id="coreInfoLabel" text="Loading..." styleClass="info-label"/>
+        </VBox>
+
+        <Separator styleClass="separator"/>
+
+        <VBox spacing="8" styleClass="stats-container">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="⚡ Current frequency:" styleClass="info-label" prefWidth="180"/>
+                <Label fx:id="freqLabel" text="Loading..." styleClass="value-label"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="🚀 Maximum frequency:" styleClass="info-label" prefWidth="180"/>
+                <Label fx:id="maxFreqLabel" text="Loading..." styleClass="info-label-bold"/>
+            </HBox>
+        </VBox>
+
+        <Separator styleClass="separator"/>
+
+        <VBox spacing="12" styleClass="stats-container">
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="📊 CPU Usage:" styleClass="info-label-bold" prefWidth="150"/>
+                <Label fx:id="loadLabel" text="0.0%" styleClass="value-label"/>
+            </HBox>
+            <ProgressBar fx:id="loadBar" prefWidth="850" prefHeight="30" progress="0"/>
+        </VBox>
+
+        <Separator styleClass="separator"/>
+
+        <VBox spacing="10" styleClass="stats-container">
+            <Label text="📈 CPU Usage History" styleClass="info-label-bold"/>
+            <LineChart fx:id="cpuChart" prefHeight="250" prefWidth="850" animated="false" legendVisible="false">
+                <xAxis>
+                    <NumberAxis fx:id="xAxis" side="BOTTOM" label="Time (seconds)"
+                                autoRanging="false" lowerBound="0" upperBound="60" tickUnit="10"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis fx:id="yAxis" side="LEFT" label="Usage (%)"
+                                autoRanging="false" lowerBound="0" upperBound="100" tickUnit="20"/>
+                </yAxis>
+            </LineChart>
+        </VBox>
+    </VBox>
+</ScrollPane>

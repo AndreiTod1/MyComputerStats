@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.example.ui.MainLayoutController"
+            styleClass="root"
+            prefWidth="1200"
+            prefHeight="800">
+
+    <left>
+        <VBox styleClass="sidebar" spacing="5" prefWidth="220">
+            <padding>
+                <Insets top="20" right="10" bottom="20" left="10"/>
+            </padding>
+
+            <Label text="MyComputerStats" styleClass="sidebar-title"/>
+            <Label text="System Monitor" styleClass="sidebar-subtitle"/>
+
+            <Separator styleClass="sidebar-separator">
+                <VBox.margin>
+                    <Insets top="15" bottom="15"/>
+                </VBox.margin>
+            </Separator>
+
+            <VBox spacing="8">
+                <Button fx:id="cpuButton" text="🖥️  CPU" styleClass="menu-button, menu-button-active"
+                        onAction="#showCpuPage" maxWidth="Infinity"/>
+                <Button fx:id="gpuButton" text="🎮  GPU" styleClass="menu-button"
+                        onAction="#showGpuPage" maxWidth="Infinity"/>
+                <Button fx:id="ramButton" text="💾  RAM" styleClass="menu-button"
+                        onAction="#showRamPage" maxWidth="Infinity"/>
+                <Button fx:id="networkButton" text="🌐  Network" styleClass="menu-button"
+                        onAction="#showNetworkPage" maxWidth="Infinity"/>
+
+                <Separator styleClass="sidebar-separator">
+                    <VBox.margin>
+                        <Insets top="10" bottom="10"/>
+                    </VBox.margin>
+                </Separator>
+
+                <Button fx:id="settingsButton" text="⚙️  Settings" styleClass="menu-button"
+                        onAction="#showSettingsPage" maxWidth="Infinity"/>
+            </VBox>
+
+            <Separator styleClass="sidebar-separator">
+                <VBox.margin>
+                    <Insets top="20" bottom="15"/>
+                </VBox.margin>
+            </Separator>
+
+            <VBox spacing="5" VBox.vgrow="ALWAYS" alignment="BOTTOM_LEFT">
+                <Label fx:id="systemInfoLabel" text="Windows 11" styleClass="sidebar-info"/>
+                <Label fx:id="uptimeLabel" text="Uptime: 0h 0m" styleClass="sidebar-info"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area">
+            <padding>
+                <Insets top="30" right="40" bottom="30" left="40"/>
+            </padding>
+        </StackPane>
+    </center>
+
+</BorderPane>
+
