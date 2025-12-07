@@ -5,6 +5,8 @@
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.chart.LineChart?>
@@ -55,6 +57,28 @@
                 <Label text="🚀 Maximum frequency:" styleClass="info-label" prefWidth="180"/>
                 <Label fx:id="maxFreqLabel" text="Loading..." styleClass="info-label-bold"/>
             </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="⚡ Turbo frequency (max):" styleClass="info-label" prefWidth="180"/>
+                <Label fx:id="turboFreqLabel" text="Loading..." styleClass="value-label"/>
+            </HBox>
+        </VBox>
+
+        <Separator styleClass="separator"/>
+
+        <VBox spacing="8" styleClass="stats-container">
+            <Label text="🌡️ Temperature Information" styleClass="info-label-bold"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Current Temperature:" styleClass="info-label" prefWidth="180"/>
+                <Label fx:id="temperatureLabel" text="Loading..." styleClass="value-label"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Average Temperature:" styleClass="info-label" prefWidth="180"/>
+                <Label fx:id="avgTemperatureLabel" text="Loading..." styleClass="value-label"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Temperature Source:" styleClass="info-label" prefWidth="180"/>
+                <Label fx:id="tempSourceLabel" text="Loading..." styleClass="info-label"/>
+            </HBox>
         </VBox>
 
         <Separator styleClass="separator"/>
@@ -65,6 +89,12 @@
                 <Label fx:id="loadLabel" text="0.0%" styleClass="value-label"/>
             </HBox>
             <ProgressBar fx:id="loadBar" prefWidth="850" prefHeight="30" progress="0"/>
+        </VBox>
+
+        <Separator styleClass="separator"/>
+
+        <VBox fx:id="perCoreContainer" spacing="5" styleClass="stats-container">
+             <Label text="💻 Per-Core Load" styleClass="info-label-bold"/>
         </VBox>
 
         <Separator styleClass="separator"/>

@@ -76,6 +76,14 @@ public class SettingsManager {
         }
     }
 
+    private double getDouble(String key, double defaultValue) {
+        try {
+            return Double.parseDouble(properties.getProperty(key, String.valueOf(defaultValue)));
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     private boolean getBoolean(String key, boolean defaultValue) {
         return Boolean.parseBoolean(properties.getProperty(key, String.valueOf(defaultValue)));
     }

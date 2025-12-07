@@ -13,7 +13,7 @@ import org.example.core.settings.SettingsChangeListener;
 
 public class SettingsPageController {
 
-    @FXML private Spinner<Integer> cpuRefreshSpinner;
+    @FXML private Spinner<Double> cpuRefreshSpinner;
     @FXML private Spinner<Integer> chartHistorySpinner;
     @FXML private CheckBox showCpuChartCheckbox;
     @FXML private ComboBox<String> temperatureUnitCombo;
@@ -31,7 +31,7 @@ public class SettingsPageController {
     }
 
     private void initializeSpinners() {
-        cpuRefreshSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 60, 1));
+        cpuRefreshSpinner.setValueFactory(new SpinnerValueFactory.DoubleSpinnerValueFactory(0.3, 10.0, 0.5, 0.1));
         chartHistorySpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(30, 300, 60));
     }
 

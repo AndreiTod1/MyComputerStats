@@ -3,7 +3,7 @@ package org.example.core.settings;
 public class AppSettings {
 
     // Refresh intervals (in seconds)
-    private int cpuRefreshInterval = 1;
+    private double cpuRefreshInterval = 0.5;
     private int chartHistorySeconds = 60;
 
     // Display preferences
@@ -17,11 +17,11 @@ public class AppSettings {
     private boolean alwaysOnTop = false;
 
     // Getters and Setters
-    public int getCpuRefreshInterval() {
+    public double getCpuRefreshInterval() {
         return cpuRefreshInterval;
     }
 
-    public void setCpuRefreshInterval(int cpuRefreshInterval) {
+    public void setCpuRefreshInterval(double cpuRefreshInterval) {
         this.cpuRefreshInterval = cpuRefreshInterval;
     }
 
