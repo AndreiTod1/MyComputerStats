@@ -317,3 +317,107 @@
   -fx-font-size: 8px;
   -fx-text-fill: -color-text-secondary;
 }
+
+/* stat boxes */
+.stat-box {
+  -fx-background-color: rgba(0, 0, 0, 0.3);
+  -fx-background-radius: 12;
+  -fx-padding: 15 20;
+  -fx-min-width: 120;
+}
+
+.stat-value {
+  -fx-font-size: 24px;
+  -fx-font-weight: 800;
+  -fx-text-fill: -color-accent-primary;
+  -fx-effect: dropshadow(gaussian, rgba(0, 242, 255, 0.4), 8, 0, 0, 0);
+}
+
+.stat-value-warning {
+  -fx-text-fill: -color-accent-warning;
+  -fx-effect: dropshadow(gaussian, rgba(255, 184, 0, 0.4), 8, 0, 0, 0);
+}
+
+.stat-value-danger {
+  -fx-text-fill: -color-accent-danger;
+  -fx-effect: dropshadow(gaussian, rgba(255, 0, 85, 0.4), 8, 0, 0, 0);
+}
+
+.stat-value-success {
+  -fx-text-fill: -color-accent-success;
+  -fx-effect: dropshadow(gaussian, rgba(0, 255, 157, 0.4), 8, 0, 0, 0);
+}
+
+/* toggle button enhanced */
+.toggle-button-custom {
+  -fx-background-color: rgba(255, 255, 255, 0.05);
+  -fx-background-radius: 15;
+  -fx-text-fill: #666;
+  -fx-font-size: 11px;
+  -fx-padding: 5 12;
+  -fx-cursor: hand;
+}
+
+.toggle-button-custom:selected {
+  -fx-background-color: rgba(0, 255, 157, 0.2);
+  -fx-text-fill: -color-accent-success;
+  -fx-effect: dropshadow(gaussian, rgba(0, 255, 157, 0.3), 5, 0, 0, 0);
+}
+
+/* process bar row */
+.process-row {
+  -fx-background-color: rgba(255, 255, 255, 0.02);
+  -fx-background-radius: 6;
+  -fx-padding: 8 12;
+}
+
+.process-row:hover {
+  -fx-background-color: rgba(255, 255, 255, 0.05);
+}
+
+.process-name {
+  -fx-font-size: 13px;
+  -fx-text-fill: -color-text-primary;
+  -fx-font-weight: 500;
+}
+
+.process-percent {
+  -fx-font-size: 13px;
+  -fx-font-weight: 700;
+  -fx-text-fill: -color-accent-primary;
+}
+
+/* combo box dark theme */
+.combo-box {
+  -fx-background-color: rgba(255, 255, 255, 0.08);
+  -fx-background-radius: 6;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
+  -fx-border-radius: 6;
+}
+
+.combo-box .list-cell {
+  -fx-text-fill: white;
+  -fx-font-size: 12px;
+}
+
+.combo-box .arrow-button {
+  -fx-background-color: transparent;
+}
+
+.combo-box .arrow {
+  -fx-background-color: white;
+}
+
+.combo-box-popup .list-view {
+  -fx-background-color: #1e2230;
+  -fx-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.combo-box-popup .list-cell {
+  -fx-background-color: transparent;
+  -fx-text-fill: white;
+}
+
+.combo-box-popup .list-cell:hover {
+  -fx-background-color: rgba(0, 242, 255, 0.2);
+}

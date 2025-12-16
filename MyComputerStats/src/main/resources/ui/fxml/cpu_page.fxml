@@ -9,6 +9,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 
@@ -53,8 +54,6 @@
                 <VBox styleClass="info-card" HBox.hgrow="ALWAYS">
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <Label text="🌡 TEMPERATURE" styleClass="section-header" style="-fx-font-size: 16px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                         <javafx.scene.control.Button fx:id="resetStatsButton" text="Reset Stats" onAction="#handleResetStats"
-                            style="-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-font-size: 10px; -fx-cursor: hand;"/>
                     </HBox>
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <Label text="Package:" styleClass="info-label"/>
@@ -91,20 +90,174 @@
         <Separator styleClass="separator"/>
 
             <!-- HISTORY CHART -->
-            <VBox styleClass="info-card">
-                <Label text="📈 USAGE HISTORY" styleClass="section-header" style="-fx-font-size: 18px;"/>
-                <LineChart fx:id="cpuChart" prefHeight="350" prefWidth="900" animated="false" legendVisible="false"
-                           horizontalGridLinesVisible="true" verticalGridLinesVisible="true" styleClass="chart-plot-background">
+            <VBox styleClass="info-card" spacing="15">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="📈 HISTORY" styleClass="section-header" style="-fx-font-size: 18px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <javafx.scene.control.ToggleButton fx:id="chartModeLoad" text="Load" 
+                        style="-fx-background-color: #00f2ff; -fx-text-fill: black; -fx-font-size: 11px; -fx-cursor: hand; -fx-background-radius: 15; -fx-padding: 5 15;"/>
+                    <javafx.scene.control.ToggleButton fx:id="chartModeTemp" text="Temp"
+                        style="-fx-background-color: #333; -fx-text-fill: #888; -fx-font-size: 11px; -fx-cursor: hand; -fx-background-radius: 15; -fx-padding: 5 15;"/>
+                    <javafx.scene.control.ToggleButton fx:id="chartModeVoltage" text="Voltage"
+                        style="-fx-background-color: #333; -fx-text-fill: #888; -fx-font-size: 11px; -fx-cursor: hand; -fx-background-radius: 15; -fx-padding: 5 15;"/>
+                    <javafx.scene.control.ToggleButton fx:id="chartModePower" text="Power"
+                        style="-fx-background-color: #333; -fx-text-fill: #888; -fx-font-size: 11px; -fx-cursor: hand; -fx-background-radius: 15; -fx-padding: 5 15;"/>
+                </HBox>
+                <LineChart fx:id="cpuChart" prefHeight="300" prefWidth="900" animated="false" legendVisible="false"
+                           horizontalGridLinesVisible="true" verticalGridLinesVisible="true">
                     <xAxis>
-                        <NumberAxis fx:id="xAxis" forceZeroInRange="false" tickLabelsVisible="true" opacity="1" label="Time (s)" style="-fx-tick-label-fill: -color-text-secondary;"/>
+                        <NumberAxis fx:id="xAxis" forceZeroInRange="false" tickLabelsVisible="true" label="Time (s)"/>
                     </xAxis>
                     <yAxis>
-                        <NumberAxis fx:id="yAxis" autoRanging="false" lowerBound="0" upperBound="100" tickUnit="20" label="Load (%)" style="-fx-tick-label-fill: -color-text-secondary;"/>
+                        <NumberAxis fx:id="yAxis" autoRanging="false" lowerBound="0" upperBound="100" tickUnit="20" label="Load (%)"/>
                     </yAxis>
                 </LineChart>
             </VBox>
-            
-            <Separator styleClass="separator"/>
+
+        <Separator styleClass="separator"/>
+
+            <!-- AVERAGE STATS OVER CHART PERIOD -->
+            <VBox styleClass="info-card" spacing="10">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="📊 SESSION AVERAGES" styleClass="section-header" style="-fx-font-size: 18px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                     <javafx.scene.control.Button fx:id="resetStatsButton" text="⟳ RESET ALL STATS" onAction="#handleResetStats"
+                        style="-fx-background-color: transparent; -fx-border-color: #555; -fx-border-radius: 5; -fx-text-fill: #aaa; -fx-font-size: 10px; -fx-cursor: hand; -fx-padding: 3 8;"/>
+                </HBox>
+                
+                <!-- Main Summary (Always Visible) -->
+                <HBox spacing="40" alignment="CENTER">
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Avg Load" styleClass="info-label"/>
+                        <Label fx:id="avgLoadLabel" text="0%" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Avg Temp" styleClass="info-label"/>
+                        <Label fx:id="sessionAvgTempLabel" text="0°C" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Avg Power" styleClass="info-label"/>
+                        <Label fx:id="sessionAvgPowerLabel" text="0 W" styleClass="value-label"/>
+                    </VBox>
+                     <VBox alignment="CENTER" spacing="5">
+                        <javafx.scene.control.ToggleButton fx:id="showDetailsToggle" text="Show Details ▼" onAction="#handleToggleDetails"
+                            style="-fx-background-color: #333; -fx-text-fill: #aaa; -fx-font-size: 11px; -fx-cursor: hand; -fx-background-radius: 10;"/>
+                    </VBox>
+                </HBox>
+                
+                <!-- Detailed Stats Grid (Collapsible) -->
+                <javafx.scene.layout.GridPane fx:id="detailsGrid" hgap="20" vgap="10" alignment="CENTER" managed="false" visible="false">
+                    <!-- Headers -->
+                    <Label text="Metric" styleClass="info-label" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label text="Min" styleClass="info-label" style="-fx-font-weight: bold;" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label text="Average" styleClass="info-label" style="-fx-font-weight: bold;" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                    <Label text="Max" styleClass="info-label" style="-fx-font-weight: bold;" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                    
+                    <!-- Load Row -->
+                    <Label text="Load" styleClass="info-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <Label fx:id="minLoadLabel" text="0%" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #00f2ff;" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <Label fx:id="avgLoadDetailLabel" text="0%" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #00f2ff;" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                    <Label fx:id="maxLoadLabel" text="0%" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #00f2ff;" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+
+                    <!-- Temp Row -->
+                    <Label text="Temp" styleClass="info-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <Label fx:id="minTempLabel" text="0°C" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #ff5555;" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                    <Label fx:id="avgTempDetailLabel" text="0°C" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #ff5555;" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                    <Label fx:id="maxTempLabel" text="0°C" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #ff5555;" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+
+                    <!-- Freq Row -->
+                    <Label text="Freq" styleClass="info-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                    <Label fx:id="minFreqLabel" text="0 GHz" styleClass="value-label" style="-fx-font-size: 14px;" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                    <Label fx:id="avgFreqDetailLabel" text="0 GHz" styleClass="value-label" style="-fx-font-size: 14px;" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                    <Label fx:id="sessionMaxFreqLabel" text="0 GHz" styleClass="value-label" style="-fx-font-size: 14px;" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+
+                    <!-- Voltage Row -->
+                    <Label text="Voltage" styleClass="info-label" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                    <Label fx:id="minVoltLabel" text="0 V" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #ffb800;" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                    <Label fx:id="avgVoltDetailLabel" text="0 V" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #ffb800;" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
+                    <Label fx:id="maxVoltLabel" text="0 V" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #ffb800;" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+
+                    <!-- Power Row -->
+                    <Label text="Power" styleClass="info-label" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                    <Label fx:id="minPowerLabel" text="0 W" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #00ff9d;" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                    <Label fx:id="avgPowerDetailLabel" text="0 W" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #00ff9d;" GridPane.columnIndex="2" GridPane.rowIndex="5"/>
+                    <Label fx:id="maxPowerLabel" text="0 W" styleClass="value-label" style="-fx-font-size: 14px; -fx-text-fill: #00ff9d;" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
+
+                    <!-- Samples Row -->
+                    <Label text="Samples" styleClass="info-label" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+                    <Label fx:id="sampleCountLabel" text="0" styleClass="info-label" GridPane.columnIndex="1" GridPane.rowIndex="6" GridPane.columnSpan="3"/>
+                </javafx.scene.layout.GridPane>
+            </VBox>
+
+        <Separator styleClass="separator"/>
+
+            <!-- THROTTLING INFO -->
+            <VBox styleClass="info-card">
+                <Label text="⚠️ THROTTLING STATUS" styleClass="section-header" style="-fx-font-size: 18px;"/>
+                <HBox spacing="40" alignment="CENTER">
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Thermal Throttle" styleClass="info-label"/>
+                        <Label fx:id="thermalThrottleLabel" text="No" styleClass="value-label" style="-fx-text-fill: #00ff00;"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Power Limit" styleClass="info-label"/>
+                        <Label fx:id="powerLimitLabel" text="Normal" styleClass="value-label" style="-fx-text-fill: #00ff00;"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Package Power" styleClass="info-label"/>
+                        <Label fx:id="packagePowerLabel" text="0W" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Max Observed Temp" styleClass="info-label"/>
+                        <Label fx:id="maxObservedTempLabel" text="0°C" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Throttle Events" styleClass="info-label"/>
+                        <Label fx:id="throttleCountLabel" text="0" styleClass="info-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+        <Separator styleClass="separator"/>
+
+            <!-- SYSTEM ACTIVITY -->
+            <VBox styleClass="info-card">
+                <Label text="⚡ SYSTEM ACTIVITY" styleClass="section-header" style="-fx-font-size: 18px;"/>
+                <HBox spacing="40" alignment="CENTER">
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Context Switches/s" styleClass="info-label"/>
+                        <Label fx:id="contextSwitchesLabel" text="0" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Interrupts/s" styleClass="info-label"/>
+                        <Label fx:id="interruptsLabel" text="0" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Processes" styleClass="info-label"/>
+                        <Label fx:id="processCountLabel" text="0" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="5">
+                        <Label text="Threads" styleClass="info-label"/>
+                        <Label fx:id="threadCountLabel" text="0" styleClass="value-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+        <Separator styleClass="separator"/>
+
+            <!-- TOP PROCESSES -->
+            <VBox styleClass="info-card">
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label text="🔝 TOP CPU PROCESSES" styleClass="section-header" style="-fx-font-size: 18px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Label text="Show:" styleClass="info-label"/>
+                    <javafx.scene.control.ComboBox fx:id="processCountCombo" prefWidth="70"/>
+                    <javafx.scene.control.ToggleButton fx:id="topProcessesToggle" text="▶ OFF" prefWidth="60"
+                        style="-fx-background-color: #333; -fx-text-fill: #888; -fx-font-size: 11px; -fx-cursor: hand;"/>
+                </HBox>
+                <VBox fx:id="topProcessesContainer" spacing="8" managed="false" visible="false">
+                    <!-- Populated dynamically when enabled -->
+                </VBox>
+            </VBox>
+
+        <Separator styleClass="separator"/>
 
             <!-- STRESS TEST -->
             <VBox fx:id="stressTestContainer" styleClass="info-card" alignment="CENTER" spacing="15">

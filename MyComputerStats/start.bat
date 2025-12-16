@@ -2,42 +2,48 @@
 setlocal
 cd /d "%~dp0"
 
-: admin check
+echo ========================================
+echo  MyComputerStats
+echo ========================================
+echo.
+
+:: admin check
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo Requesting Administrator privileges...
+    echo need admin rights for cpu monitoring
+    echo requesting elevation...
     powershell -Command "Start-Process '%~0' -Verb RunAs"
     exit /b
 )
 
-: build check
+:: check native bridge
+if not exist "native\MonitorBridge.exe" (
+    echo native bridge not found!
+    echo.
+    echo run NativeBridge\compile_bridge.bat first
+    pause
+    exit /b 1
+)
+
+:: check java
+java -version >nul 2>&1
+if %errorLevel% neq 0 (
+    echo java not found! install java 17+
+    pause
+    exit /b 1
+)
+
+:: build if needed
 if not exist "target\MyComputerStats-1.0-SNAPSHOT.jar" (
-    echo JAR not found. Building project...
-    call mvn clean package
+    echo building project...
+    call mvn package -q -DskipTests
     if %errorLevel% neq 0 (
-        echo Build failed!
+        echo build failed!
         pause
         exit /b 1
     )
 )
 
-: run application
-echo Starting MyComputerStats (Native Bridge Mode)...
-
-: rebuild java
-echo Updating Java application...
-call mvn package -DskipTests
-if %errorLevel% neq 0 (
-    echo Java build failed!
-    pause
-    exit /b
-)
-
-: check native bridge
-if not exist "..\NativeBridge\MonitorBridge.exe" (
-    echo WARNING: MonitorBridge.exe not found in ..\NativeBridge!
-    echo Please compile it manually as requested.
-)
-
+:: run
+echo starting app...
 java -jar "target\MyComputerStats-1.0-SNAPSHOT.jar"
-pause

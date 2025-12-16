@@ -17,6 +17,7 @@ public class CpuMonitoringService {
     private static final long LOG_INTERVAL_MS = 30_000;
 
     private final CentralProcessor processor;
+    private final oshi.software.os.OperatingSystem os;
     private final CpuTempProcessWrapper temperatureWrapper;
 
     private long[] previousTicks;
@@ -25,10 +26,18 @@ public class CpuMonitoringService {
 
     private double[] maxCoreTemps;
 
+    // for per-second calculations
+    private long lastContextSwitches = 0;
+    private long lastInterrupts = 0;
+    private long lastMeasureTime = 0;
+    private double contextSwitchesPerSec = 0;
+    private double interruptsPerSec = 0;
+
     public CpuMonitoringService() {
         SystemInfo systemInfo = new SystemInfo();
         HardwareAbstractionLayer hardware = systemInfo.getHardware();
         this.processor = hardware.getProcessor();
+        this.os = systemInfo.getOperatingSystem();
 
         this.previousTicks = processor.getSystemCpuLoadTicks();
         this.previousCoreTicks = processor.getProcessorCpuLoadTicks();
@@ -37,6 +46,11 @@ public class CpuMonitoringService {
 
         this.temperatureWrapper = new CpuTempProcessWrapper();
         this.temperatureWrapper.start();
+
+        // init counters
+        this.lastContextSwitches = processor.getContextSwitches();
+        this.lastInterrupts = processor.getInterrupts();
+        this.lastMeasureTime = System.currentTimeMillis();
 
         String cpuName = processor.getProcessorIdentifier().getName();
         int physical = processor.getPhysicalProcessorCount();
@@ -160,6 +174,123 @@ public class CpuMonitoringService {
             System.out.printf("[cpu] load: %.1f%% | freq: %.2f ghz | temp: %.0fc [%s]%n",
                     load * 100, freqGHz, temp, status);
             lastLogTime = now;
+        }
+    }
+
+    // throttle and power from native bridge
+    public boolean isThermalThrottle() {
+        return temperatureWrapper.isThermalThrottle();
+    }
+
+    public boolean isPowerThrottle() {
+        return temperatureWrapper.isPowerThrottle();
+    }
+
+    public double getPackagePower() {
+        return temperatureWrapper.getPackagePower();
+    }
+
+    // system activity metrics
+    public void updateSystemActivity() {
+        long now = System.currentTimeMillis();
+        long elapsed = now - lastMeasureTime;
+
+        if (elapsed > 0) {
+            long currentCs = processor.getContextSwitches();
+            long currentInt = processor.getInterrupts();
+
+            double timeSec = elapsed / 1000.0;
+            contextSwitchesPerSec = (currentCs - lastContextSwitches) / timeSec;
+            interruptsPerSec = (currentInt - lastInterrupts) / timeSec;
+
+            lastContextSwitches = currentCs;
+            lastInterrupts = currentInt;
+            lastMeasureTime = now;
+        }
+    }
+
+    public double getContextSwitchesPerSec() {
+        return contextSwitchesPerSec;
+    }
+
+    public double getInterruptsPerSec() {
+        return interruptsPerSec;
+    }
+
+    public int getProcessCount() {
+        return os.getProcessCount();
+    }
+
+    public int getThreadCount() {
+        return os.getThreadCount();
+    }
+
+    // top cpu processes with accurate cpu load calculation
+    private java.util.Map<Integer, oshi.software.os.OSProcess> previousProcesses = new java.util.HashMap<>();
+    private long lastProcessUpdate = 0;
+
+    public java.util.List<ProcessInfo> getTopProcesses(int count) {
+        java.util.List<ProcessInfo> all = new java.util.ArrayList<>();
+        int logicalCores = processor.getLogicalProcessorCount();
+
+        // get more processes to have good selection after filtering
+        java.util.List<oshi.software.os.OSProcess> procs = os.getProcesses(
+                null,
+                oshi.software.os.OperatingSystem.ProcessSorting.CPU_DESC,
+                50);
+
+        for (oshi.software.os.OSProcess p : procs) {
+            String name = p.getName();
+
+            // skip system processes
+            if (name.equalsIgnoreCase("Idle") ||
+                    name.equalsIgnoreCase("System Idle Process") ||
+                    name.equalsIgnoreCase("Registry") ||
+                    name.equalsIgnoreCase("Memory Compression") ||
+                    name.equalsIgnoreCase("System")) {
+                continue;
+            }
+
+            double cpuPercent = 0;
+            oshi.software.os.OSProcess prev = previousProcesses.get(p.getProcessID());
+
+            if (prev != null) {
+                // get CPU load and divide by logical cores to match Task Manager
+                cpuPercent = 100.0 * p.getProcessCpuLoadBetweenTicks(prev) / logicalCores;
+
+                // sanity check
+                if (cpuPercent < 0 || Double.isNaN(cpuPercent) || Double.isInfinite(cpuPercent)) {
+                    cpuPercent = 0;
+                }
+                // cap at 100%
+                cpuPercent = Math.min(100.0, cpuPercent);
+            }
+
+            previousProcesses.put(p.getProcessID(), p);
+            all.add(new ProcessInfo(name, cpuPercent, p.getProcessID(), p.getPath()));
+        }
+
+        // sort by cpu descending AFTER calculation
+        all.sort((a, b) -> Double.compare(b.cpuPercent, a.cpuPercent));
+
+        // return top N
+        if (all.size() > count) {
+            return new java.util.ArrayList<>(all.subList(0, count));
+        }
+        return all;
+    }
+
+    public static class ProcessInfo {
+        public final String name;
+        public final double cpuPercent;
+        public final int pid;
+        public final String path;
+
+        public ProcessInfo(String name, double cpuPercent, int pid, String path) {
+            this.name = name;
+            this.cpuPercent = cpuPercent;
+            this.pid = pid;
+            this.path = path != null ? path : "";
         }
     }
 }

@@ -1,6 +1,7 @@
 package org.example.app;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.Parent;
@@ -10,13 +11,24 @@ import org.example.core.settings.AppSettings;
 import org.example.core.settings.SettingsManager;
 import org.example.core.settings.SettingsChangeListener;
 
-
 public class MainApp extends Application {
 
     private MainLayoutController mainController;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // kill any leftover bridge processes on shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                new ProcessBuilder("taskkill", "/f", "/im", "MonitorBridge.exe")
+                        .redirectErrorStream(true)
+                        .start()
+                        .waitFor();
+            } catch (Exception e) {
+                // ignore
+            }
+        }));
+
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/fxml/main_layout.fxml"));
         Parent root = loader.load();
         mainController = loader.getController();
@@ -34,6 +46,7 @@ public class MainApp extends Application {
             if (mainController != null) {
                 mainController.shutdown();
             }
+            Platform.exit();
         });
 
         SettingsChangeListener.getInstance().addListener(newSettings -> {

@@ -3,17 +3,11 @@ package org.example.ui.cpu;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.animation.Transition;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.example.core.cpu.CpuInfo;
@@ -21,8 +15,8 @@ import org.example.monitoring.cpu.CpuMonitoringService;
 import org.example.core.settings.AppSettings;
 import org.example.core.settings.SettingsManager;
 import org.example.core.settings.SettingsChangeListener;
-
-import org.example.ui.cpu.CpuCoreTable;
+import org.example.ui.cpu.manager.CpuChartManager;
+import org.example.ui.cpu.model.SessionStatistics;
 
 public class CpuPageController {
 
@@ -47,12 +41,23 @@ public class CpuPageController {
     private Label loadLabel;
     @FXML
     private ProgressBar loadBar;
+
+    // Chart components injected from FXML
     @FXML
     private LineChart<Number, Number> cpuChart;
     @FXML
     private NumberAxis xAxis;
     @FXML
     private NumberAxis yAxis;
+    @FXML
+    private javafx.scene.control.ToggleButton chartModeLoad;
+    @FXML
+    private javafx.scene.control.ToggleButton chartModeTemp;
+    @FXML
+    private javafx.scene.control.ToggleButton chartModeVoltage;
+    @FXML
+    private javafx.scene.control.ToggleButton chartModePower;
+
     @FXML
     private VBox perCoreContainer;
 
@@ -69,19 +74,113 @@ public class CpuPageController {
     @FXML
     private Label stressStatusLabel;
 
+    // average stats labels
+    @FXML
+    private Label avgLoadLabel;
+    @FXML
+    private Label sessionAvgTempLabel;
+    @FXML
+    private Label sessionAvgPowerLabel;
+
+    @FXML
+    private Label sampleCountLabel;
+
+    // throttling labels
+    @FXML
+    private Label thermalThrottleLabel;
+    @FXML
+    private Label powerLimitLabel;
+    @FXML
+    private Label packagePowerLabel;
+    @FXML
+    private Label maxObservedTempLabel;
+    @FXML
+    private Label throttleCountLabel;
+
+    // system activity labels
+    @FXML
+    private Label contextSwitchesLabel;
+    @FXML
+    private Label interruptsLabel;
+    @FXML
+    private Label processCountLabel;
+    @FXML
+    private Label threadCountLabel;
+
+    // top processes
+    @FXML
+    private VBox topProcessesContainer;
+    @FXML
+    private javafx.scene.control.ToggleButton topProcessesToggle;
+    @FXML
+    private javafx.scene.control.ComboBox<Integer> processCountCombo;
+    private boolean topProcessesEnabled = false;
+    private int topProcessCount = 5;
+
+    // Delegates
+    private CpuChartManager chartManager;
+    private SessionStatistics sessionStats = new SessionStatistics();
+
+    // Services
     private CpuMonitoringService cpuService;
     private org.example.monitoring.cpu.CpuStressTestManager stressManager;
     private Timeline timeline;
-    private XYChart.Series<Number, Number> cpuSeries;
-    private int maxDataPoints = 60;
     private CpuCoreTable cpuTable;
+
     private double previousOverallLoad = 0.0;
+
+    // FXML fields for detailed stats
+    @FXML
+    private javafx.scene.control.ToggleButton showDetailsToggle;
+    @FXML
+    private javafx.scene.layout.GridPane detailsGrid;
+
+    @FXML
+    private Label minLoadLabel, avgLoadDetailLabel, maxLoadLabel;
+    @FXML
+    private Label minTempLabel, avgTempDetailLabel, maxTempLabel;
+    @FXML
+    private Label minFreqLabel, avgFreqDetailLabel, sessionMaxFreqLabel;
+    @FXML
+    private Label minVoltLabel, avgVoltDetailLabel, maxVoltLabel;
+    @FXML
+    private Label minPowerLabel, avgPowerDetailLabel, maxPowerLabel;
+
+    @FXML
+    private void handleToggleDetails() {
+        boolean visible = showDetailsToggle.isSelected();
+        detailsGrid.setVisible(visible);
+        detailsGrid.setManaged(visible);
+        if (visible) {
+            showDetailsToggle.setText("Hide Details ▲");
+        } else {
+            showDetailsToggle.setText("Show Details ▼");
+        }
+    }
 
     @FXML
     private void handleResetStats() {
         if (cpuService != null) {
             cpuService.resetStats();
         }
+
+        sessionStats.reset();
+
+        if (chartManager != null) {
+            chartManager.reset();
+        }
+
+        // Update UI immediately
+        updateSessionStatsUI();
+
+        maxObservedTempLabel.setText("0°C");
+        maxObservedTempLabel.setStyle("");
+        throttleCountLabel.setText("0");
+
+        thermalThrottleLabel.setText("No");
+        thermalThrottleLabel.setStyle("-fx-text-fill: #00ff00;");
+        powerLimitLabel.setText("Normal");
+        powerLimitLabel.setStyle("-fx-text-fill: #00ff00;");
     }
 
     @FXML
@@ -121,10 +220,12 @@ public class CpuPageController {
     public void initialize() {
         cpuService = new CpuMonitoringService();
         stressManager = new org.example.monitoring.cpu.CpuStressTestManager();
-        initializeChart();
+
+        chartManager = new CpuChartManager(cpuChart, xAxis, yAxis,
+                chartModeLoad, chartModeTemp, chartModeVoltage, chartModePower);
+
         updateStressStatus(false);
-        cpuService = new CpuMonitoringService();
-        initializeChart();
+        initializeTopProcesses();
 
         AppSettings settings = SettingsManager.getInstance().getSettings();
         applySettings(settings);
@@ -138,16 +239,40 @@ public class CpuPageController {
         SettingsChangeListener.getInstance().addListener(this::onSettingsChanged);
     }
 
+    private void initializeTopProcesses() {
+        // setup combo box
+        processCountCombo.getItems().addAll(5, 10, 15, 20);
+        processCountCombo.setValue(5);
+        processCountCombo.setOnAction(e -> topProcessCount = processCountCombo.getValue());
+
+        // setup toggle button
+        topProcessesToggle.setOnAction(e -> {
+            topProcessesEnabled = topProcessesToggle.isSelected();
+            topProcessesContainer.setVisible(topProcessesEnabled);
+            topProcessesContainer.setManaged(topProcessesEnabled);
+
+            if (topProcessesEnabled) {
+                topProcessesToggle.setText("▼ ON");
+                topProcessesToggle.setStyle(
+                        "-fx-background-color: rgba(0,170,0,0.3); -fx-text-fill: #00ff00; -fx-font-size: 11px; -fx-cursor: hand;");
+            } else {
+                topProcessesToggle.setText("▶ OFF");
+                topProcessesToggle.setStyle(
+                        "-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: #888; -fx-font-size: 11px; -fx-cursor: hand;");
+                topProcessesContainer.getChildren().clear();
+            }
+        });
+    }
+
     private void onSettingsChanged(AppSettings settings) {
         applySettings(settings);
         restartMonitoring();
     }
 
     private void applySettings(AppSettings settings) {
-        cpuChart.setVisible(settings.isShowCpuChart());
-        cpuChart.setManaged(settings.isShowCpuChart());
-        maxDataPoints = settings.getChartHistorySeconds();
-        xAxis.setUpperBound(maxDataPoints);
+        if (chartManager != null) {
+            chartManager.updateSettings(settings);
+        }
     }
 
     private void startMonitoring() {
@@ -168,13 +293,6 @@ public class CpuPageController {
             timeline.stop();
         }
         startMonitoring();
-    }
-
-    private void initializeChart() {
-        cpuSeries = new XYChart.Series<>();
-        cpuSeries.setName("CPU Usage");
-        cpuChart.getData().add(cpuSeries);
-        cpuSeries.getData().add(new XYChart.Data<>(0, 0));
     }
 
     private void initializePerCoreDisplay(int coreCount) {
@@ -217,9 +335,6 @@ public class CpuPageController {
         freqLabel.setText(info.getFormattedClockSpeed());
         temperatureLabel.setText(info.getFormattedTemperature());
 
-        // update average temperature
-        avgTemperatureLabel.setText(info.getFormattedAverageTemperature());
-
         // update temperature source
         tempSourceLabel.setText(info.getTemperatureSource());
 
@@ -253,7 +368,164 @@ public class CpuPageController {
         if (cpuTable != null) {
             cpuTable.update(info);
         }
-        updateChart(smoothedOverallLoad * 100);
+
+        if (chartManager != null) {
+            chartManager.update(info, smoothedOverallLoad * 100, cpuService.getPackagePower());
+        }
+
+        // update session averages
+        updateSessionStats(info, smoothedOverallLoad);
+
+        // update throttling status
+        updateThrottlingStatus(info);
+
+        // update system activity
+        updateSystemActivity();
+
+        // update top processes
+        updateTopProcesses();
+    }
+
+    private void updateSystemActivity() {
+        cpuService.updateSystemActivity();
+
+        contextSwitchesLabel.setText(formatNumber(cpuService.getContextSwitchesPerSec()));
+        interruptsLabel.setText(formatNumber(cpuService.getInterruptsPerSec()));
+        processCountLabel.setText(String.valueOf(cpuService.getProcessCount()));
+        threadCountLabel.setText(String.valueOf(cpuService.getThreadCount()));
+    }
+
+    private String formatNumber(double value) {
+        if (value >= 1_000_000)
+            return String.format("%.1fM", value / 1_000_000);
+        if (value >= 1_000)
+            return String.format("%.1fK", value / 1_000);
+        return String.format("%.0f", value);
+    }
+
+    private void updateTopProcesses() {
+        // only update if enabled
+        if (!topProcessesEnabled)
+            return;
+
+        var processes = cpuService.getTopProcesses(topProcessCount);
+        topProcessesContainer.getChildren().clear();
+
+        for (var proc : processes) {
+            javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(12);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            row.getStyleClass().add("process-row");
+
+            // process name
+            Label nameLabel = new Label(proc.name);
+            nameLabel.setMinWidth(200);
+            nameLabel.setMaxWidth(200);
+            nameLabel.getStyleClass().add("process-name");
+
+            // progress bar
+            ProgressBar bar = new ProgressBar(Math.min(proc.cpuPercent / 100.0, 1.0));
+            bar.setPrefWidth(400);
+            bar.setMinHeight(14);
+            javafx.scene.layout.HBox.setHgrow(bar, javafx.scene.layout.Priority.ALWAYS);
+
+            // color based on usage
+            if (proc.cpuPercent > 50) {
+                bar.setStyle("-fx-accent: #ff3333;");
+            } else if (proc.cpuPercent > 20) {
+                bar.setStyle("-fx-accent: #ff9900;");
+            } else if (proc.cpuPercent > 5) {
+                bar.setStyle("-fx-accent: #00ccff;");
+            } else {
+                bar.setStyle("-fx-accent: #00aa00;");
+            }
+
+            // percentage label
+            Label percentLabel = new Label(String.format("%.1f%%", proc.cpuPercent));
+            percentLabel.setMinWidth(65);
+            percentLabel.getStyleClass().add("process-percent");
+
+            row.getChildren().addAll(nameLabel, bar, percentLabel);
+            topProcessesContainer.getChildren().add(row);
+        }
+    }
+
+    private void updateSessionStats(CpuInfo info, double load) {
+        sessionStats.update(info, load, cpuService.getPackagePower());
+        updateSessionStatsUI();
+    }
+
+    private void updateSessionStatsUI() {
+        // --- UPDATE UI SUMMARY ---
+        avgLoadLabel.setText(String.format("%.1f%%", sessionStats.getAvgLoad()));
+        sessionAvgTempLabel.setText(String.format("%.0f°C", sessionStats.getAvgTemp()));
+        sessionAvgPowerLabel.setText(String.format("%.1f W", sessionStats.getAvgPower()));
+        sampleCountLabel.setText(String.valueOf(sessionStats.getSampleCount()));
+
+        // --- UPDATE DETAILED GRID UI ---
+        // Load
+        minLoadLabel.setText(String.format("%.1f%%", sessionStats.getMinLoad()));
+        avgLoadDetailLabel.setText(String.format("%.1f%%", sessionStats.getAvgLoad()));
+        maxLoadLabel.setText(String.format("%.1f%%", sessionStats.getMaxLoad()));
+
+        // Temp
+        minTempLabel.setText(String.format("%.0f°C", sessionStats.getMinTemp()));
+        avgTempDetailLabel.setText(String.format("%.0f°C", sessionStats.getAvgTemp()));
+        maxTempLabel.setText(String.format("%.0f°C", sessionStats.getMaxTemp()));
+
+        // Freq
+        minFreqLabel.setText(String.format("%.2f GHz", sessionStats.getMinFreq()));
+        avgFreqDetailLabel.setText(String.format("%.2f GHz", sessionStats.getAvgFreq()));
+        sessionMaxFreqLabel.setText(String.format("%.2f GHz", sessionStats.getMaxFreq()));
+
+        // Volt
+        minVoltLabel.setText(String.format("%.3f V", sessionStats.getMinVolt()));
+        avgVoltDetailLabel.setText(String.format("%.3f V", sessionStats.getAvgVolt()));
+        maxVoltLabel.setText(String.format("%.3f V", sessionStats.getMaxVolt()));
+
+        // Power
+        minPowerLabel.setText(String.format("%.1f W", sessionStats.getMinPower()));
+        avgPowerDetailLabel.setText(String.format("%.1f W", sessionStats.getAvgPower()));
+        maxPowerLabel.setText(String.format("%.1f W", sessionStats.getMaxPower()));
+    }
+
+    private void updateThrottlingStatus(CpuInfo info) {
+        // update throttling logic in session stats
+        sessionStats.updateThrottling(cpuService.isThermalThrottle());
+
+        double temp = info.getTemperature();
+
+        // track max temp (display tracking)
+        maxObservedTempLabel.setText(String.format("%.0f°C", sessionStats.getMaxObservedTemp()));
+        colorTemperatureLabel(maxObservedTempLabel, sessionStats.getMaxObservedTemp());
+
+        // get throttle status from native bridge (reads actual MSR bits)
+        boolean isThrottling = cpuService.isThermalThrottle();
+        boolean isPowerLimited = cpuService.isPowerThrottle();
+        double packagePower = cpuService.getPackagePower();
+
+        // update throttle count label
+        throttleCountLabel.setText(String.valueOf(sessionStats.getThrottleEventCount()));
+
+        // update thermal throttle display
+        if (isThrottling) {
+            thermalThrottleLabel.setText("YES");
+            thermalThrottleLabel.setStyle("-fx-text-fill: #ff0000; -fx-font-weight: bold;");
+        } else {
+            thermalThrottleLabel.setText("No");
+            thermalThrottleLabel.setStyle("-fx-text-fill: #00ff00;");
+        }
+
+        // update power limit display
+        if (isPowerLimited) {
+            powerLimitLabel.setText("Limited");
+            powerLimitLabel.setStyle("-fx-text-fill: #ff9900;");
+        } else {
+            powerLimitLabel.setText("Normal");
+            powerLimitLabel.setStyle("-fx-text-fill: #00ff00;");
+        }
+
+        // update package power display
+        packagePowerLabel.setText(String.format("%.1fW", packagePower));
     }
 
     private void colorTemperatureLabel(Label label, double temp) {
@@ -267,51 +539,6 @@ public class CpuPageController {
             label.setStyle("-fx-text-fill: #ffcc00;");
         } else {
             label.setStyle("-fx-text-fill: #00ff00;");
-        }
-    }
-
-    // Old updatePerCoreLoads removed
-
-    private long chartStartTime = 0;
-
-    private void updateChart(double cpuUsage) {
-        if (chartStartTime == 0) {
-            chartStartTime = System.currentTimeMillis();
-            xAxis.setAutoRanging(false); // Disable auto-ranging explicitly
-        }
-
-        double elapsedSeconds = (System.currentTimeMillis() - chartStartTime) / 1000.0;
-
-        cpuSeries.getData().add(new XYChart.Data<>(elapsedSeconds, cpuUsage));
-
-        double windowStart = elapsedSeconds - maxDataPoints;
-        if (windowStart < 0)
-            windowStart = 0;
-
-        // Remove old points
-        var data = cpuSeries.getData();
-        while (!data.isEmpty() && data.get(0).getXValue().doubleValue() < windowStart) {
-            data.remove(0);
-        }
-
-        // Update Axis
-        xAxis.setLowerBound(windowStart);
-        xAxis.setUpperBound(Math.max(elapsedSeconds, maxDataPoints)); // Keep full window visible or grow until full
-
-        updateChartLineColor(cpuUsage);
-    }
-
-    private void updateChartLineColor(double cpuUsage) {
-        cpuChart.getStyleClass().removeAll("chart-low", "chart-medium", "chart-high", "chart-critical");
-
-        if (cpuUsage < 30) {
-            cpuChart.getStyleClass().add("chart-low");
-        } else if (cpuUsage < 60) {
-            cpuChart.getStyleClass().add("chart-medium");
-        } else if (cpuUsage < 85) {
-            cpuChart.getStyleClass().add("chart-high");
-        } else {
-            cpuChart.getStyleClass().add("chart-critical");
         }
     }
 }

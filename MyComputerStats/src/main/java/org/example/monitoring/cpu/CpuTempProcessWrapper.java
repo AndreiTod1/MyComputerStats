@@ -19,6 +19,11 @@ public class CpuTempProcessWrapper {
     private volatile double[] frequencies = new double[0];
     private volatile double[] voltages = new double[0];
 
+    // throttle and power from bridge
+    private volatile boolean thermalThrottle = false;
+    private volatile boolean powerThrottle = false;
+    private volatile double packagePower = 0;
+
     private int coreCount = 0;
     private Thread monitorThread;
     private Process bridgeProcess;
@@ -39,6 +44,13 @@ public class CpuTempProcessWrapper {
         running = false;
         if (bridgeProcess != null && bridgeProcess.isAlive()) {
             bridgeProcess.destroy();
+            try {
+                if (!bridgeProcess.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)) {
+                    bridgeProcess.destroyForcibly();
+                }
+            } catch (InterruptedException e) {
+                bridgeProcess.destroyForcibly();
+            }
         }
     }
 
@@ -154,7 +166,8 @@ public class CpuTempProcessWrapper {
                 status = "Monitoring (" + cpuName + ")";
 
             } else if (parts[0].equals("DATA")) {
-                // format: DATA,pkgTemp, c0T,c0F,c0V, c1T,c1F,c1V, ...
+                // format: DATA,pkgTemp, c0T,c0F,c0V, ...,
+                // thermalThrottle,powerThrottle,powerWatts
                 double[] newTemps = new double[coreCount];
                 double[] newFreqs = new double[coreCount];
                 double[] newVolts = new double[coreCount];
@@ -172,6 +185,19 @@ public class CpuTempProcessWrapper {
                     }
                 }
 
+                // parse throttle and power at end
+                // format: ...,thermalThrottle,powerThrottle,powerWatts
+                int throttleIdx = 2 + (coreCount * 3);
+                if (throttleIdx + 2 < parts.length) {
+                    try {
+                        thermalThrottle = Integer.parseInt(parts[throttleIdx]) == 1;
+                        powerThrottle = Integer.parseInt(parts[throttleIdx + 1]) == 1;
+                        packagePower = Double.parseDouble(parts[throttleIdx + 2]);
+                    } catch (NumberFormatException e) {
+                        // skip
+                    }
+                }
+
                 this.temperatures = newTemps;
                 this.frequencies = newFreqs;
                 this.voltages = newVolts;
@@ -181,5 +207,18 @@ public class CpuTempProcessWrapper {
         } catch (Exception e) {
             System.err.println("[CpuBridge] parse error: " + e.getMessage());
         }
+    }
+
+    // getters for throttle/power
+    public boolean isThermalThrottle() {
+        return thermalThrottle;
+    }
+
+    public boolean isPowerThrottle() {
+        return powerThrottle;
+    }
+
+    public double getPackagePower() {
+        return packagePower;
     }
 }
