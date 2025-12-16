@@ -5,25 +5,24 @@ import java.io.File;
 import java.io.InputStreamReader;
 
 /**
- * Monitoring via external process (NativeBridge).
- * Parses stdout from MonitorBridge.exe to avoid JNA/Driver issues in JVM.
+ * wrapper for the native monitor bridge exe
+ * reads temp, freq, voltage from stdout
  */
 public class CpuTempProcessWrapper {
 
     private volatile boolean running;
     private volatile String status = "Stopped";
 
-    // Cached data arrays
     private volatile double[] temperatures = new double[0];
     private volatile String[] coreTypes = new String[0];
     private volatile double[] usages = new double[0];
     private volatile double[] frequencies = new double[0];
+    private volatile double[] voltages = new double[0];
 
     private int coreCount = 0;
     private Thread monitorThread;
     private Process bridgeProcess;
 
-    // start monitoring
     public void start() {
         if (running)
             return;
@@ -36,7 +35,6 @@ public class CpuTempProcessWrapper {
         monitorThread.start();
     }
 
-    // stop monitoring
     public void stop() {
         running = false;
         if (bridgeProcess != null && bridgeProcess.isAlive()) {
@@ -44,7 +42,6 @@ public class CpuTempProcessWrapper {
         }
     }
 
-    // Getters
     public double[] getTemperatures() {
         return temperatures.clone();
     }
@@ -61,35 +58,44 @@ public class CpuTempProcessWrapper {
         return frequencies.clone();
     }
 
+    public double[] getVoltages() {
+        return voltages.clone();
+    }
+
     public String getStatus() {
         return status;
     }
 
     private void monitorLoop() {
         try {
-            // look for native bridge sibling folder
             File userDir = new File(System.getProperty("user.dir"));
 
-            // check sibling (preferred)
+            // try sibling nativebridge folder first
             File nativeDir = new File(userDir.getParentFile(), "NativeBridge");
             File exeFile = new File(nativeDir, "MonitorBridge.exe");
-
-            System.out.println("[CpuBridge] Checking path: " + exeFile.getAbsolutePath());
+            System.out.println("[CpuBridge] checking sibling: " + exeFile.getAbsolutePath());
 
             if (!exeFile.exists()) {
-                // check internal native folder (fallback)
+                // fallback to local native folder
                 nativeDir = new File(userDir, "native");
                 exeFile = new File(nativeDir, "MonitorBridge.exe");
-                System.out.println("[CpuBridge] Fallback checking: " + exeFile.getAbsolutePath());
+                System.out.println("[CpuBridge] fallback local native: " + exeFile.getAbsolutePath());
             }
 
             if (!exeFile.exists()) {
-                status = "Error: MonitorBridge.exe not found at " + exeFile.getAbsolutePath();
+                // last resort, check root
+                nativeDir = userDir;
+                exeFile = new File(nativeDir, "MonitorBridge.exe");
+                System.out.println("[CpuBridge] fallback root: " + exeFile.getAbsolutePath());
+            }
+
+            if (!exeFile.exists()) {
+                status = "Error: MonitorBridge.exe not found";
                 System.err.println("[CpuBridge] " + status);
                 return;
             }
 
-            System.out.println("[CpuBridge] Found: " + exeFile.getAbsolutePath());
+            System.out.println("[CpuBridge] found: " + exeFile.getAbsolutePath());
 
             ProcessBuilder pb = new ProcessBuilder(exeFile.getAbsolutePath());
             pb.directory(nativeDir);
@@ -107,12 +113,12 @@ public class CpuTempProcessWrapper {
 
             if (running) {
                 status = "Bridge Process Exited";
-                System.err.println("[CpuBridge] Process exited unexpectedly");
+                System.err.println("[CpuBridge] process exited unexpectedly");
             }
 
         } catch (Exception e) {
             status = "Error: " + e.getMessage();
-            System.err.println("[CpuBridge] Error: " + e.getMessage());
+            System.err.println("[CpuBridge] error: " + e.getMessage());
             e.printStackTrace();
         } finally {
             if (bridgeProcess != null) {
@@ -128,46 +134,52 @@ public class CpuTempProcessWrapper {
                 return;
 
             if (parts[0].equals("INIT")) {
-                // INIT,coreCount,tjMax,cpuName
+                // format: INIT,coreCount,tjMax,cpuName
                 coreCount = Integer.parseInt(parts[1]);
                 int tjMax = Integer.parseInt(parts[2]);
                 String cpuName = parts.length > 3 ? parts[3] : "Unknown CPU";
 
                 System.out.println(
-                        "[CpuBridge] Initialized: " + cpuName + " (" + coreCount + " cores, TjMax=" + tjMax + "C)");
+                        "[CpuBridge] initialized: " + cpuName + " (" + coreCount + " cores, tjmax=" + tjMax + ")");
 
-                // Init arrays
                 temperatures = new double[coreCount];
                 frequencies = new double[coreCount];
-                usages = new double[coreCount]; // Not provided by bridge yet
+                usages = new double[coreCount];
                 coreTypes = new String[coreCount];
 
-                // Assume all P-cores for now or update bridge to send types
+                // assume p cores for now
                 for (int i = 0; i < coreCount; i++)
                     coreTypes[i] = "P";
 
                 status = "Monitoring (" + cpuName + ")";
 
             } else if (parts[0].equals("DATA")) {
-                // DATA,pkgTemp, c0T,c0F,c0V, c1T,c1F,c1V, ...
-
+                // format: DATA,pkgTemp, c0T,c0F,c0V, c1T,c1F,c1V, ...
                 double[] newTemps = new double[coreCount];
                 double[] newFreqs = new double[coreCount];
+                double[] newVolts = new double[coreCount];
 
                 for (int i = 0; i < coreCount; i++) {
                     int baseIdx = 2 + (i * 3);
                     if (baseIdx + 2 < parts.length) {
-                        newTemps[i] = Integer.parseInt(parts[baseIdx]);
-                        newFreqs[i] = Integer.parseInt(parts[baseIdx + 1]); // MHz
-                        // Voltage (baseIdx+2) is ignored
+                        try {
+                            newTemps[i] = Double.parseDouble(parts[baseIdx]);
+                            newFreqs[i] = Double.parseDouble(parts[baseIdx + 1]);
+                            newVolts[i] = Double.parseDouble(parts[baseIdx + 2]);
+                        } catch (NumberFormatException e) {
+                            // skip malformed
+                        }
                     }
                 }
 
                 this.temperatures = newTemps;
                 this.frequencies = newFreqs;
+                this.voltages = newVolts;
+            } else {
+                System.out.println("[CpuBridge] raw: " + line);
             }
         } catch (Exception e) {
-            System.err.println("[CpuBridge] Parse error: " + e.getMessage() + " for line: " + line);
+            System.err.println("[CpuBridge] parse error: " + e.getMessage());
         }
     }
 }

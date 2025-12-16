@@ -19,98 +19,112 @@
             hbarPolicy="NEVER"
             vbarPolicy="AS_NEEDED"
             styleClass="scroll-pane">
+        <VBox spacing="20" styleClass="stats-container" alignment="TOP_CENTER" maxWidth="1200">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
 
-    <VBox styleClass="info-card" spacing="15" maxWidth="900" alignment="TOP_LEFT">
-        <padding>
-            <Insets top="25" right="25" bottom="25" left="25"/>
-        </padding>
+            <!-- PROCESSOR INFO CARD -->
+            <VBox styleClass="info-card">
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label text="PROCESSOR" styleClass="section-header"/>
+                    <Label fx:id="cpuBrandLabel" text="Intel" styleClass="title-label"/>
+                    <Label fx:id="cpuModelLabel" text="Core i9-13900K" styleClass="info-label-bold"/>
+                </HBox>
+                <Label fx:id="coreInfoLabel" text="24 Cores / 32 Threads" styleClass="info-label"/>
+            </VBox>
 
-        <Label text="🖥️ PROCESSOR" styleClass="section-header"/>
-        <Separator styleClass="separator"/>
+            <!-- MAIN STATS GRID -->
+            <HBox spacing="20">
+                <!-- FREQUENCY CARD -->
+                <VBox styleClass="info-card" HBox.hgrow="ALWAYS">
+                    <Label text="⚡ FREQUENCY" styleClass="section-header" style="-fx-font-size: 16px;"/>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Current:" styleClass="info-label"/>
+                        <Label fx:id="freqLabel" text="4.50 GHz" styleClass="value-label"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Max:" styleClass="info-label"/>
+                        <Label fx:id="maxFreqLabel" text="5.80 GHz" styleClass="info-label"/>
+                    </HBox>
+                </VBox>
 
-        <VBox spacing="8" styleClass="stats-container">
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Brand:" styleClass="info-label" prefWidth="150"/>
-                <Label fx:id="cpuBrandLabel" text="Loading..." styleClass="value-label"/>
+                <!-- TEMPERATURE CARD -->
+                <VBox styleClass="info-card" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="🌡 TEMPERATURE" styleClass="section-header" style="-fx-font-size: 16px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                         <javafx.scene.control.Button fx:id="resetStatsButton" text="Reset Stats" onAction="#handleResetStats"
+                            style="-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; -fx-font-size: 10px; -fx-cursor: hand;"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Package:" styleClass="info-label"/>
+                        <Label fx:id="temperatureLabel" text="65°C" styleClass="value-label"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Average:" styleClass="info-label"/>
+                        <Label fx:id="avgTemperatureLabel" text="62°C" styleClass="info-label"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Source:" styleClass="info-label"/>
+                        <Label fx:id="tempSourceLabel" text="Native Bridge" styleClass="info-label"/>
+                    </HBox>
+                </VBox>
+                
+                 <!-- LOAD CARD -->
+                <VBox styleClass="info-card" HBox.hgrow="ALWAYS">
+                    <Label text="📊 LOAD" styleClass="section-header" style="-fx-font-size: 16px;"/>
+                     <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Total:" styleClass="info-label"/>
+                        <Label fx:id="loadLabel" text="25%" styleClass="value-label"/>
+                    </HBox>
+                    <ProgressBar fx:id="loadBar" prefWidth="200" progress="0.25" styleClass="progress-bar"/>
+                </VBox>
             </HBox>
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Model:" styleClass="info-label" prefWidth="150"/>
-                <Label fx:id="cpuModelLabel" text="Loading..." styleClass="info-label-bold" wrapText="true" maxWidth="700"/>
-            </HBox>
-        </VBox>
-
-        <Separator styleClass="separator"/>
-
-        <VBox spacing="8" styleClass="stats-container">
-            <Label text="Core Information:" styleClass="info-label-bold"/>
-            <Label fx:id="coreInfoLabel" text="Loading..." styleClass="info-label"/>
-        </VBox>
-
-        <Separator styleClass="separator"/>
-
-        <VBox spacing="8" styleClass="stats-container">
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="⚡ Current frequency:" styleClass="info-label" prefWidth="180"/>
-                <Label fx:id="freqLabel" text="Loading..." styleClass="value-label"/>
-            </HBox>
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="🚀 Maximum frequency:" styleClass="info-label" prefWidth="180"/>
-                <Label fx:id="maxFreqLabel" text="Loading..." styleClass="info-label-bold"/>
-            </HBox>
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="⚡ Turbo frequency (max):" styleClass="info-label" prefWidth="180"/>
-                <Label fx:id="turboFreqLabel" text="Loading..." styleClass="value-label"/>
-            </HBox>
-        </VBox>
-
-        <Separator styleClass="separator"/>
-
-        <VBox spacing="8" styleClass="stats-container">
-            <Label text="🌡️ Temperature Information" styleClass="info-label-bold"/>
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Current Temperature:" styleClass="info-label" prefWidth="180"/>
-                <Label fx:id="temperatureLabel" text="Loading..." styleClass="value-label"/>
-            </HBox>
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Average Temperature:" styleClass="info-label" prefWidth="180"/>
-                <Label fx:id="avgTemperatureLabel" text="Loading..." styleClass="value-label"/>
-            </HBox>
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Temperature Source:" styleClass="info-label" prefWidth="180"/>
-                <Label fx:id="tempSourceLabel" text="Loading..." styleClass="info-label"/>
-            </HBox>
-        </VBox>
-
-        <Separator styleClass="separator"/>
-
-        <VBox spacing="12" styleClass="stats-container">
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="📊 CPU Usage:" styleClass="info-label-bold" prefWidth="150"/>
-                <Label fx:id="loadLabel" text="0.0%" styleClass="value-label"/>
-            </HBox>
-            <ProgressBar fx:id="loadBar" prefWidth="850" prefHeight="30" progress="0"/>
-        </VBox>
 
         <Separator styleClass="separator"/>
 
-        <VBox fx:id="perCoreContainer" spacing="5" styleClass="stats-container">
-             <Label text="💻 Per-Core Load" styleClass="info-label-bold"/>
-        </VBox>
+            <!-- PER CORE CHART -->
+            <VBox fx:id="perCoreContainer" spacing="10" styleClass="info-card">
+                 <Label text="💻 PER-CORE ACTIVITY" styleClass="section-header" style="-fx-font-size: 18px;"/>
+            </VBox>
 
         <Separator styleClass="separator"/>
 
-        <VBox spacing="10" styleClass="stats-container">
-            <Label text="📈 CPU Usage History" styleClass="info-label-bold"/>
-            <LineChart fx:id="cpuChart" prefHeight="250" prefWidth="850" animated="false" legendVisible="false">
-                <xAxis>
-                    <NumberAxis fx:id="xAxis" side="BOTTOM" label="Time (seconds)"
-                                autoRanging="false" lowerBound="0" upperBound="60" tickUnit="10"/>
-                </xAxis>
-                <yAxis>
-                    <NumberAxis fx:id="yAxis" side="LEFT" label="Usage (%)"
-                                autoRanging="false" lowerBound="0" upperBound="100" tickUnit="20"/>
-                </yAxis>
-            </LineChart>
-        </VBox>
+            <!-- HISTORY CHART -->
+            <VBox styleClass="info-card">
+                <Label text="📈 USAGE HISTORY" styleClass="section-header" style="-fx-font-size: 18px;"/>
+                <LineChart fx:id="cpuChart" prefHeight="350" prefWidth="900" animated="false" legendVisible="false"
+                           horizontalGridLinesVisible="true" verticalGridLinesVisible="true" styleClass="chart-plot-background">
+                    <xAxis>
+                        <NumberAxis fx:id="xAxis" forceZeroInRange="false" tickLabelsVisible="true" opacity="1" label="Time (s)" style="-fx-tick-label-fill: -color-text-secondary;"/>
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis fx:id="yAxis" autoRanging="false" lowerBound="0" upperBound="100" tickUnit="20" label="Load (%)" style="-fx-tick-label-fill: -color-text-secondary;"/>
+                    </yAxis>
+                </LineChart>
+            </VBox>
+            
+            <Separator styleClass="separator"/>
+
+            <!-- STRESS TEST -->
+            <VBox fx:id="stressTestContainer" styleClass="info-card" alignment="CENTER" spacing="15">
+                <Label text="🔥 CPU STRESS TEST" styleClass="section-header" style="-fx-font-size: 18px; -fx-text-fill: #ff5555;"/>
+                
+                <Label text="Warning: This will utilize 100% of all CPU threads. Monitor temperatures carefully." 
+                       styleClass="info-label" style="-fx-text-fill: #aaaaaa; -fx-font-style: italic;"/>
+                
+                <HBox spacing="20" alignment="CENTER">
+                    <javafx.scene.control.Button fx:id="startStressButton" text="START STRESS TEST" onAction="#handleStartStress"
+                        style="-fx-background-color: #ff0000; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand;"/>
+                        
+                    <javafx.scene.control.Button fx:id="stopStressButton" text="STOP" onAction="#handleStopStress" disable="true"
+                        style="-fx-background-color: #555555; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20; -fx-cursor: hand;"/>
+                </HBox>
+                
+                <HBox spacing="10" alignment="CENTER">
+                    <Label text="Status:" styleClass="info-label"/>
+                    <Label fx:id="stressStatusLabel" text="Inactive" styleClass="value-label" style="-fx-text-fill: #00ff00;"/>
+                </HBox>
+            </VBox>
     </VBox>
 </ScrollPane>

@@ -32,27 +32,6 @@ public class CpuInfo {
                 perCoreFrequencies, averageTemperature, temperatureSource, null);
     }
 
-    public CpuInfo(String brand, String model, int physicalCores, int logicalCores,
-            double currentClockSpeed, double maxClockSpeed, double loadPercentage,
-            double[] perCoreLoads, double temperature, double[] perCoreTemperatures,
-            double[] perCoreFrequencies, double averageTemperature, String temperatureSource,
-            String[] coreTypes) {
-        this.brand = brand != null ? brand : "Unknown";
-        this.model = model != null ? model : "Unknown";
-        this.physicalCores = Math.max(1, physicalCores);
-        this.logicalCores = Math.max(1, logicalCores);
-        this.currentClockSpeed = Math.max(0, currentClockSpeed);
-        this.maxClockSpeed = Math.max(0, maxClockSpeed);
-        this.loadPercentage = clamp(loadPercentage, 0.0, 1.0);
-        this.perCoreLoads = perCoreLoads != null ? perCoreLoads : new double[0];
-        this.temperature = temperature;
-        this.perCoreTemperatures = perCoreTemperatures != null ? perCoreTemperatures : new double[0];
-        this.perCoreFrequencies = perCoreFrequencies != null ? perCoreFrequencies : new double[0];
-        this.averageTemperature = averageTemperature;
-        this.temperatureSource = temperatureSource != null ? temperatureSource : "N/A";
-        this.coreTypes = coreTypes != null ? coreTypes : new String[0];
-    }
-
     public String getBrand() {
         return brand;
     }
@@ -175,5 +154,59 @@ public class CpuInfo {
 
     public enum LoadLevel {
         LOW, MODERATE, HIGH, CRITICAL
+    }
+
+    private final double[] perCoreVoltages;
+    private final double[] perCoreMaxTemps;
+
+    public CpuInfo(String brand, String model, int physicalCores, int logicalCores,
+            double currentClockSpeed, double maxClockSpeed, double loadPercentage,
+            double[] perCoreLoads, double temperature, double[] perCoreTemperatures,
+            double[] perCoreFrequencies, double averageTemperature, String temperatureSource,
+            String[] coreTypes) {
+        this(brand, model, physicalCores, logicalCores, currentClockSpeed, maxClockSpeed,
+                loadPercentage, perCoreLoads, temperature, perCoreTemperatures,
+                perCoreFrequencies, averageTemperature, temperatureSource, coreTypes, null, null);
+    }
+
+    public CpuInfo(String brand, String model, int physicalCores, int logicalCores,
+            double currentClockSpeed, double maxClockSpeed, double loadPercentage,
+            double[] perCoreLoads, double temperature, double[] perCoreTemperatures,
+            double[] perCoreFrequencies, double averageTemperature, String temperatureSource,
+            String[] coreTypes, double[] perCoreVoltages) {
+        this(brand, model, physicalCores, logicalCores, currentClockSpeed, maxClockSpeed,
+                loadPercentage, perCoreLoads, temperature, perCoreTemperatures,
+                perCoreFrequencies, averageTemperature, temperatureSource, coreTypes, perCoreVoltages, null);
+    }
+
+    public CpuInfo(String brand, String model, int physicalCores, int logicalCores,
+            double currentClockSpeed, double maxClockSpeed, double loadPercentage,
+            double[] perCoreLoads, double temperature, double[] perCoreTemperatures,
+            double[] perCoreFrequencies, double averageTemperature, String temperatureSource,
+            String[] coreTypes, double[] perCoreVoltages, double[] perCoreMaxTemps) {
+        this.brand = brand != null ? brand : "Unknown";
+        this.model = model != null ? model : "Unknown";
+        this.physicalCores = Math.max(1, physicalCores);
+        this.logicalCores = Math.max(1, logicalCores);
+        this.currentClockSpeed = Math.max(0, currentClockSpeed);
+        this.maxClockSpeed = Math.max(0, maxClockSpeed);
+        this.loadPercentage = clamp(loadPercentage, 0.0, 1.0);
+        this.perCoreLoads = perCoreLoads != null ? perCoreLoads : new double[0];
+        this.temperature = temperature;
+        this.perCoreTemperatures = perCoreTemperatures != null ? perCoreTemperatures : new double[0];
+        this.perCoreFrequencies = perCoreFrequencies != null ? perCoreFrequencies : new double[0];
+        this.averageTemperature = averageTemperature;
+        this.temperatureSource = temperatureSource != null ? temperatureSource : "N/A";
+        this.coreTypes = coreTypes != null ? coreTypes : new String[0];
+        this.perCoreVoltages = perCoreVoltages != null ? perCoreVoltages : new double[0];
+        this.perCoreMaxTemps = perCoreMaxTemps != null ? perCoreMaxTemps : new double[0];
+    }
+
+    public double[] getPerCoreVoltages() {
+        return perCoreVoltages;
+    }
+
+    public double[] getPerCoreMaxTemps() {
+        return perCoreMaxTemps;
     }
 }

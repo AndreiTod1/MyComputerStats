@@ -1,16 +1,13 @@
-# Compiled class file
 *.class
 
-# Log file
 *.log
 
-# BlueJ files
 *.ctxt
 
-# Mobile Tools for Java (J2ME)
+# mobile tools for java
 .mtj.tmp/
 
-# Package Files #
+# package files
 *.jar
 *.war
 *.nar
@@ -19,6 +16,21 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# vm crash logs
 hs_err_pid*
 replay_pid*
+
+# native bridge build artifacts
+NativeBridge/*.obj
+NativeBridge/*.exe
+NativeBridge/*.dll
+NativeBridge/*.sys
+
+# ide
+.idea/
+*.iml
+.vscode/
+
+# maven
+target/
+dependency-reduced-pom.xml
