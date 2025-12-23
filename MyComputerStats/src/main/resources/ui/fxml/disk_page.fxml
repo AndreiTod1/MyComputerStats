@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.GridPane?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.example.ui.disk.DiskPageController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            styleClass="scroll-pane">
+        <VBox spacing="15" styleClass="stats-container" alignment="TOP_CENTER">
+            <padding>
+                <Insets top="15" right="20" bottom="15" left="20"/>
+            </padding>
+
+            <!-- STORAGE OVERVIEW -->
+            <VBox styleClass="info-card" alignment="CENTER" spacing="12">
+                <Label text="💾 STORAGE OVERVIEW" styleClass="section-header" style="-fx-font-size: 18px;"/>
+                
+                <HBox spacing="50" alignment="CENTER">
+                    <VBox alignment="CENTER" spacing="4">
+                        <Label text="Total Space" styleClass="info-label"/>
+                        <Label fx:id="totalSpaceLabel" text="0 GB" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="4">
+                        <Label text="Used" styleClass="info-label"/>
+                        <Label fx:id="usedSpaceLabel" text="0 GB" styleClass="value-label"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="4">
+                        <Label text="Free" styleClass="info-label"/>
+                        <Label fx:id="freeSpaceLabel" text="0 GB" styleClass="value-label" style="-fx-text-fill: #00ff9d;"/>
+                    </VBox>
+                    <VBox alignment="CENTER" spacing="4">
+                        <Label text="Usage" styleClass="info-label"/>
+                        <Label fx:id="usagePercentLabel" text="0%" styleClass="value-label"/>
+                    </VBox>
+                </HBox>
+                
+                <ProgressBar fx:id="totalUsageBar" prefWidth="500" prefHeight="14" progress="0" styleClass="progress-bar"/>
+            </VBox>
+
+            <!-- DRIVES LIST -->
+            <VBox fx:id="drivesContainer" styleClass="info-card" spacing="15" alignment="CENTER">
+                <Label text="📁 DRIVES" styleClass="section-header" style="-fx-font-size: 18px;"/>
+            </VBox>
+    </VBox>
+</ScrollPane>
