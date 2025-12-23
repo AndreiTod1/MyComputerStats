@@ -22,16 +22,15 @@ public class CpuCoreTable extends VBox {
     }
 
     public CpuCoreTable() {
-        this.setSpacing(0); // Remove vertical spacing between rows for tighter look
+        this.setSpacing(0);
         this.setPadding(new Insets(10));
 
-        // Header
-        HBox header = new HBox(0); // Remove HBox spacing, use padding/alignment
+        HBox header = new HBox(0);
         header.setPadding(new Insets(10, 0, 10, 0));
         header.setStyle("-fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 5 5 0 0;");
 
-        // Define column percentages
-        double[] widths = { 0.1, 0.1, 0.15, 0.15, 0.15, 0.2, 0.15 }; // Total 1.0
+        // define column percentages
+        double[] widths = { 0.1, 0.1, 0.15, 0.15, 0.15, 0.2, 0.15 };
 
         header.getChildren().addAll(
                 createHeaderLabel("Core", SortField.CORE, widths[0]),
@@ -42,9 +41,7 @@ public class CpuCoreTable extends VBox {
                 createHeaderLabel("Freq", SortField.FREQ, widths[5]),
                 createHeaderLabel("Volt", SortField.VOLT, widths[6]));
 
-        // Content
         rowsContainer = new VBox(0);
-        // Removed ScrollPane to allow full page growing
         this.getChildren().addAll(header, rowsContainer);
     }
 
@@ -52,7 +49,7 @@ public class CpuCoreTable extends VBox {
         Label label = new Label(text);
         label.setMaxWidth(Double.MAX_VALUE);
         label.prefWidthProperty().bind(this.widthProperty().multiply(percentWidth));
-        label.setAlignment(Pos.CENTER); // Center align headers
+        label.setAlignment(Pos.CENTER); // center align headers
         label.setStyle(
                 "-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: -color-text-secondary; -fx-cursor: hand;");
         label.setOnMouseClicked(e -> handleSort(field));
@@ -72,7 +69,6 @@ public class CpuCoreTable extends VBox {
     public void update(CpuInfo info) {
         int coreCount = info.getLogicalCores();
 
-        // Initialize rows if needed
         if (rows.size() != coreCount) {
             rows.clear();
             rowsContainer.getChildren().clear();
@@ -83,7 +79,6 @@ public class CpuCoreTable extends VBox {
             }
         }
 
-        // Update data
         double[] loads = info.getPerCoreLoads();
         double[] temps = info.getPerCoreTemperatures();
         double[] freqs = info.getPerCoreFrequencies();
@@ -93,7 +88,7 @@ public class CpuCoreTable extends VBox {
 
         for (int i = 0; i < coreCount; i++) {
             CoreRow row = rows.get(i);
-            row.index = i; // ensure index is correct
+            row.index = i;
             row.type = (types != null && i < types.length) ? types[i] : "?";
             row.load = (loads != null && i < loads.length) ? loads[i] : 0;
             row.temp = (temps != null && i < temps.length) ? temps[i] : 0;
@@ -140,18 +135,17 @@ public class CpuCoreTable extends VBox {
         rowsContainer.getChildren().addAll(rows);
     }
 
-    // Color helper: Discrete Thresholds
     public String getColorForTemp(double temp) {
         if (temp < 60) {
-            return "-fx-text-fill: -color-text-primary;"; // Normal
+            return "-fx-text-fill: #00f2ff;"; // normal
         } else if (temp < 75) {
-            return "-fx-text-fill: #ffff00;"; // Yellow (Warm)
+            return "-fx-text-fill: #ffff00;"; // yellow (warm)
         } else if (temp < 85) {
-            return "-fx-text-fill: #ff8800;"; // Orange (Hot)
+            return "-fx-text-fill: #ff8800;"; // orange (hot)
         } else if (temp < 95) {
-            return "-fx-text-fill: #ff4400;"; // Red-Orange (Danger)
+            return "-fx-text-fill: #ff4400;"; // red-orange (danger)
         } else {
-            return "-fx-text-fill: #ff0000; -fx-font-weight: bold;"; // Red (Critical)
+            return "-fx-text-fill: #ff0000; -fx-font-weight: bold;"; // red (critical)
         }
     }
 
@@ -190,9 +184,9 @@ public class CpuCoreTable extends VBox {
         private Label createLabel(String colorVar, double percent, CpuCoreTable parent, String extraStyle) {
             Label l = new Label();
             l.setMaxWidth(Double.MAX_VALUE);
-            // Bind width to parent width * percent
+            // bind width to parent width * percent
             l.prefWidthProperty().bind(parent.widthProperty().multiply(percent));
-            l.setAlignment(Pos.CENTER); // Center align values
+            l.setAlignment(Pos.CENTER); // center align values
             l.setStyle(extraStyle + " -fx-text-fill: " + colorVar + ";");
             return l;
         }
@@ -201,16 +195,16 @@ public class CpuCoreTable extends VBox {
             lblCore.setText("C" + index);
             lblType.setText(type);
 
-            // Temp with gradient
+            // temp with gradient
             lblTemp.setText(String.format("%.0f°C", temp));
             lblTemp.setStyle(parentTable.getColorForTemp(temp)
                     + " -fx-font-family: 'Consolas', 'Monospaced'; -fx-font-size: 16px;");
 
-            // Max Temp with warning
+            // max temp with warning
             String warning = (maxTemp > 90) ? " (!)" : "";
             lblMax.setText(String.format("%.0f°C%s", maxTemp, warning));
 
-            // Specific style for Max Temp warning
+            // specific style for max temp warning
             if (maxTemp > 90) {
                 lblMax.setStyle(
                         "-fx-text-fill: #ff0000; -fx-font-weight: bold; -fx-font-family: 'Consolas', 'Monospaced'; -fx-font-size: 16px;");
@@ -220,7 +214,7 @@ public class CpuCoreTable extends VBox {
             }
 
             lblLoad.setText(String.format("%.0f%%", load * 100));
-            lblFreq.setText(String.format("%.2fG", freq));
+            lblFreq.setText(String.format("%.2f GHz", freq));
             lblVolt.setText(String.format("%.3fV", volt));
         }
     }

@@ -109,14 +109,6 @@ public class CpuChartManager {
             avgVolt /= volts.length;
         }
         voltageSeries.getData().add(new XYChart.Data<>(elapsedSeconds, avgVolt));
-
-        // power (package)
-        // Note: We need package power passed in or read from info if available.
-        // Assuming CpuInfo or Service provides it. Controller passes it usually.
-        // For now, we will assume 0 if not accessible, or update caller to pass it.
-        // Wait, CpuInfo doesn't have package power directly?
-        // Controller used cpuService.getPackagePower().
-        // I will add a method to update power separately or pass it in update.
     }
 
     public void updatePower(double power, double elapsedSeconds) {
@@ -178,9 +170,6 @@ public class CpuChartManager {
         tempSeries.getData().clear();
         voltageSeries.getData().clear();
         powerSeries.getData().clear();
-        // keep start time or reset? Better to keep relative time or reset everything.
-        // If we reset stats, we usually want fresh chart.
-        // But removing data is enough.
     }
 
     private void switchMode(ChartMode mode) {
@@ -254,28 +243,7 @@ public class CpuChartManager {
     }
 
     private void updateLineColor(double value) {
-        // Only dynamic for LOAD usually, but maybe for others too?
-        // Original code only had dynamic color logic.
-        // Whatever, let's keep the logic.
-
         chart.getStyleClass().removeAll("chart-low", "chart-medium", "chart-high", "chart-critical");
-
-        // For other modes, maybe we want fixed colors?
-        // In the original code (lines 374+), the AXIS color changed, but the LINE color
-        // was set by CSS classes .chart-low etc.
-        // but those classes probably assume Load coloring (Green->Yellow->Red).
-        // For Temp: Green->Red is fine.
-        // For Voltage: maybe not appropriate?
-        // For Power: maybe not appropriate?
-
-        // However, the original code had:
-        // switch(mode) { case LOAD: ... // Load line color is dynamic, handled by
-        // updateChartLineColor }
-        // case TEMP: ...
-
-        // Let's defer to CSS if possible, but the original code enforced it via
-        // 'updateChartLineColor' calling style classes.
-        // I will keep it for now.
 
         if (value < 30)
             chart.getStyleClass().add("chart-low");

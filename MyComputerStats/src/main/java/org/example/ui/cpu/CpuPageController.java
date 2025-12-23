@@ -275,7 +275,11 @@ public class CpuPageController {
         }
     }
 
-    private void startMonitoring() {
+    public void startMonitoring() {
+        if (timeline != null && timeline.getStatus() == Animation.Status.RUNNING) {
+            return;
+        }
+
         AppSettings settings = SettingsManager.getInstance().getSettings();
         double refreshInterval = settings.getCpuRefreshInterval();
 
@@ -286,6 +290,12 @@ public class CpuPageController {
                 }));
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
+    }
+
+    public void stopMonitoring() {
+        if (timeline != null) {
+            timeline.stop();
+        }
     }
 
     private void restartMonitoring() {
@@ -373,16 +383,9 @@ public class CpuPageController {
             chartManager.update(info, smoothedOverallLoad * 100, cpuService.getPackagePower());
         }
 
-        // update session averages
         updateSessionStats(info, smoothedOverallLoad);
-
-        // update throttling status
         updateThrottlingStatus(info);
-
-        // update system activity
         updateSystemActivity();
-
-        // update top processes
         updateTopProcesses();
     }
 
@@ -455,34 +458,34 @@ public class CpuPageController {
     }
 
     private void updateSessionStatsUI() {
-        // --- UPDATE UI SUMMARY ---
+        // update summary
         avgLoadLabel.setText(String.format("%.1f%%", sessionStats.getAvgLoad()));
         sessionAvgTempLabel.setText(String.format("%.0f°C", sessionStats.getAvgTemp()));
         sessionAvgPowerLabel.setText(String.format("%.1f W", sessionStats.getAvgPower()));
         sampleCountLabel.setText(String.valueOf(sessionStats.getSampleCount()));
 
-        // --- UPDATE DETAILED GRID UI ---
-        // Load
+        // update detailed grid
+        // load
         minLoadLabel.setText(String.format("%.1f%%", sessionStats.getMinLoad()));
         avgLoadDetailLabel.setText(String.format("%.1f%%", sessionStats.getAvgLoad()));
         maxLoadLabel.setText(String.format("%.1f%%", sessionStats.getMaxLoad()));
 
-        // Temp
+        // temp
         minTempLabel.setText(String.format("%.0f°C", sessionStats.getMinTemp()));
         avgTempDetailLabel.setText(String.format("%.0f°C", sessionStats.getAvgTemp()));
         maxTempLabel.setText(String.format("%.0f°C", sessionStats.getMaxTemp()));
 
-        // Freq
+        // freq
         minFreqLabel.setText(String.format("%.2f GHz", sessionStats.getMinFreq()));
         avgFreqDetailLabel.setText(String.format("%.2f GHz", sessionStats.getAvgFreq()));
         sessionMaxFreqLabel.setText(String.format("%.2f GHz", sessionStats.getMaxFreq()));
 
-        // Volt
+        // volt
         minVoltLabel.setText(String.format("%.3f V", sessionStats.getMinVolt()));
         avgVoltDetailLabel.setText(String.format("%.3f V", sessionStats.getAvgVolt()));
         maxVoltLabel.setText(String.format("%.3f V", sessionStats.getMaxVolt()));
 
-        // Power
+        // power
         minPowerLabel.setText(String.format("%.1f W", sessionStats.getMinPower()));
         avgPowerDetailLabel.setText(String.format("%.1f W", sessionStats.getAvgPower()));
         maxPowerLabel.setText(String.format("%.1f W", sessionStats.getMaxPower()));
@@ -530,15 +533,15 @@ public class CpuPageController {
 
     private void colorTemperatureLabel(Label label, double temp) {
         if (temp <= 0) {
-            label.setStyle("-fx-text-fill: #888;");
+            label.setStyle("");
         } else if (temp > 80) {
             label.setStyle("-fx-text-fill: #ff0000; -fx-font-weight: bold;");
         } else if (temp > 70) {
-            label.setStyle("-fx-text-fill: #ff9900;");
+            label.setStyle("-fx-text-fill: #ff9900; -fx-font-weight: 700;");
         } else if (temp > 60) {
-            label.setStyle("-fx-text-fill: #ffcc00;");
+            label.setStyle("-fx-text-fill: #ffcc00; -fx-font-weight: 700;");
         } else {
-            label.setStyle("-fx-text-fill: #00ff00;");
+            label.setStyle("");
         }
     }
 }

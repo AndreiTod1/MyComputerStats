@@ -61,7 +61,7 @@
                     </HBox>
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <Label text="Average:" styleClass="info-label"/>
-                        <Label fx:id="avgTemperatureLabel" text="62°C" styleClass="info-label"/>
+                        <Label fx:id="avgTemperatureLabel" text="62°C" styleClass="value-label"/>
                     </HBox>
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <Label text="Source:" styleClass="info-label"/>

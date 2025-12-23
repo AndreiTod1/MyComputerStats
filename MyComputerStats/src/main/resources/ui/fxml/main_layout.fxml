@@ -37,6 +37,8 @@
                         onAction="#showGpuPage" maxWidth="Infinity"/>
                 <Button fx:id="ramButton" text="💾  RAM" styleClass="menu-button"
                         onAction="#showRamPage" maxWidth="Infinity"/>
+                <Button fx:id="diskButton" text="💿  Disk" styleClass="menu-button"
+                        onAction="#showDiskPage" maxWidth="Infinity"/>
                 <Button fx:id="networkButton" text="🌐  Network" styleClass="menu-button"
                         onAction="#showNetworkPage" maxWidth="Infinity"/>
 
