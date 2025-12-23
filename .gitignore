@@ -31,6 +31,9 @@ NativeBridge/*.sys
 *.iml
 .vscode/
 
+*.bat
+*.sh
+
 # maven
 target/
 dependency-reduced-pom.xml
